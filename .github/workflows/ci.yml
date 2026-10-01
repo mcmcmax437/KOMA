@@ -71,14 +71,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
           ssh_opts="-i $HOME/.ssh/deploy_key -o IdentitiesOnly=yes"
-          ssh $ssh_opts "$SSH_USER@$SSH_HOST" "mkdir -p /opt/koma"
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" "mkdir -p /usr/src/koma_miniApp/KOMA"
           tar -czf - \
             --exclude .git \
             --exclude node_modules \
             --exclude .env \
             --exclude '**/dist' \
-            . | ssh $ssh_opts "$SSH_USER@$SSH_HOST" "tar -xzf - -C /opt/koma"
-          ssh $ssh_opts "$SSH_USER@$SSH_HOST" "test -f /opt/koma/.env" \
-            || { echo "Create /opt/koma/.env on the server. Deploys do not write it."; exit 1; }
+            . | ssh $ssh_opts "$SSH_USER@$SSH_HOST" "tar -xzf - -C /usr/src/koma_miniApp/KOMA"
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" "test -f /usr/src/koma_miniApp/KOMA/.env" \
+            || { echo "Create /usr/src/koma_miniApp/KOMA/.env on the server. Deploys do not write it."; exit 1; }
           ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
-            "cd /opt/koma && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans"
+            "cd /usr/src/koma_miniApp/KOMA && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans"
