@@ -1,20 +1,30 @@
 # Production overlay. Requires Docker Compose v2.24+ for !reset.
+# Uses the MySQL service already installed on the server. No database container is started.
 # Host nginx keeps ports 80 and 443. The Mini App is only on 127.0.0.1:8080.
 services:
   mysql:
-    restart: unless-stopped
-    ports: !reset []
-    shm_size: 256mb
-    command: ["--innodb-buffer-pool-size=128M"]
+    profiles: ["bundled-db"]
 
   api:
     restart: unless-stopped
+    network_mode: host
     ports: !reset []
+    depends_on: !reset []
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
 
   worker:
     restart: unless-stopped
+    network_mode: host
+    depends_on: !reset []
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
 
   web:
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./docker/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
     ports: !reset
       - "127.0.0.1:8080:80"

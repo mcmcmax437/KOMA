@@ -49,7 +49,7 @@ On the server, once: install Docker Engine and Compose v2.24 or newer, and open 
 
 The app and its `.env` live in `/usr/src/koma_miniApp/KOMA` on the server.
 
-Repository secrets are only `VPS_HOST`, `VPS_USER`, and `VPS_SSH_PRIVATE_KEY`. App settings stay in `/usr/src/koma_miniApp/KOMA/.env`. Deploys do not overwrite that file. `MYSQL_PASSWORD` must be letters and digits, and it stays after the first successful start.
+Repository secrets are only `VPS_HOST`, `VPS_USER`, and `VPS_SSH_PRIVATE_KEY`. App settings stay in `/usr/src/koma_miniApp/KOMA/.env`. Deploys do not overwrite that file. Production uses the MySQL service already running on the server. `DATABASE_URL` in that file must name a database used only by KOMA.
 
 ## Sources
 
