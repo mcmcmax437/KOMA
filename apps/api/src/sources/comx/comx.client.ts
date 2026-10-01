@@ -1,5 +1,6 @@
 import { loadConfig } from "../../config";
 import { SourceError } from "../errors/source-errors";
+import { sourceFetch } from "../source-fetch";
 import { COMX_PARSER_VERSION, detectComxBlock } from "./comx.parser";
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
@@ -29,8 +30,7 @@ export class ComxClient {
   private async fetchHtml(url: string): Promise<string> {
     const timeout = loadConfig().sourceTimeoutMs;
     try {
-      const first = await fetch(url, {
-        redirect: "manual",
+      const first = await sourceFetch(url, {
         signal: AbortSignal.timeout(timeout),
         headers: {
           "User-Agent": USER_AGENT,

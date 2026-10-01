@@ -1,5 +1,6 @@
 import { loadConfig } from "../../config";
 import { SourceError } from "../errors/source-errors";
+import { sourceFetch } from "../source-fetch";
 import { MANGALIB_PARSER_VERSION, pickImageServer } from "./mangalib.mapper";
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
@@ -64,7 +65,7 @@ export class MangalibClient {
     return this.schedule(async () => {
       const timeout = loadConfig().sourceTimeoutMs;
       try {
-        const response = await fetch(`${this.apiUrl}${path}`, {
+        const response = await sourceFetch(`${this.apiUrl}${path}`, {
           signal: AbortSignal.timeout(timeout),
           headers: {
             Accept: "application/json",

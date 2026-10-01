@@ -37,11 +37,22 @@ services:
       ALLOW_DEV_AUTH: "false"
       LOG_LEVEL: info
       IMAGE_HOST_ALLOWLIST: com-x.life,cdnlibs.org,imglib.info,mangalib.me
+      FETCHER_URL: ${FETCHER_URL:-http://fetcher:3020}
     depends_on:
       mysql:
         condition: service_healthy
     ports:
       - "3000:3000"
+
+  fetcher:
+    build:
+      context: .
+      dockerfile: docker/fetcher/Dockerfile
+    environment:
+      PORT: 3020
+      FETCH_CONCURRENCY: 2
+    shm_size: "512mb"
+    mem_limit: 900m
 
   worker:
     build:
@@ -60,6 +71,7 @@ services:
       MANGALIB_API_URL: ${MANGALIB_API_URL:-https://api.cdnlibs.org}
       ALLOW_DEV_AUTH: "false"
       LOG_LEVEL: info
+      FETCHER_URL: ${FETCHER_URL:-http://fetcher:3020}
     depends_on:
       mysql:
         condition: service_healthy

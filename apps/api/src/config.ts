@@ -14,6 +14,7 @@ export interface AppConfig {
   runScheduler: boolean;
   imageHostAllowlist: string[];
   sourceTimeoutMs: number;
+  fetcherUrl: string;
   webOrigin: string | true;
 }
 
@@ -43,6 +44,7 @@ export function loadConfig(): AppConfig {
       .map((item) => item.trim().toLowerCase())
       .filter(Boolean),
     sourceTimeoutMs: Number(process.env.SOURCE_TIMEOUT_MS ?? 12000),
+    fetcherUrl: (process.env.FETCHER_URL ?? "").trim().replace(/\/$/, ""),
     webOrigin: origin && origin !== "*" ? origin : true,
   };
 }

@@ -27,7 +27,7 @@ export function continuePath(item: ContinueItem): string {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { source, setSource, user } = useAppState();
+  const { source, setSource } = useAppState();
   const [recent, setRecent] = useState<ContinueItem[]>([]);
   const [sort, setSort] = useState<FeedSort>("popular");
   const [items, setItems] = useState<SearchResult[]>([]);
@@ -67,15 +67,8 @@ export function HomePage() {
 
   useEffect(() => { void load(1); }, [source, sort]);
 
-  const name = user?.firstName || user?.username;
-
   return (
     <section className="page">
-      <header className="hero">
-        <p className="eyebrow">{name ? `Привіт, ${name}` : "Telegram reader"}</p>
-        <h1>Що читаємо сьогодні?</h1>
-      </header>
-
       {recent.length > 0 ? (
         <div className="shelf">
           <div className="section-head">

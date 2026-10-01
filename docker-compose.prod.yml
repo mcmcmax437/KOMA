@@ -14,13 +14,22 @@ services:
       # Host port 3000 is already taken by another service.
       PORT: 3010
       HOST: 127.0.0.1
+      FETCHER_URL: http://127.0.0.1:3020
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+
+  fetcher:
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      PORT: 3020
+      HOST: 127.0.0.1
 
   worker:
     restart: unless-stopped
     network_mode: host
     depends_on: !reset []
     environment:
+      FETCHER_URL: http://127.0.0.1:3020
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
 
   web:
