@@ -8,12 +8,31 @@ export interface SourceInfo {
   enabled: boolean;
 }
 
+export const FEED_SORTS = ["popular", "updated"] as const;
+
+export type FeedSort = (typeof FEED_SORTS)[number];
+
 export interface SearchResult {
   externalId: string;
   title: string;
   alternativeTitles?: string[];
   coverUrl?: string;
   url: string;
+  rating?: string;
+  kind?: string;
+  status?: string;
+}
+
+export interface FeedPage {
+  items: SearchResult[];
+  hasMore: boolean;
+}
+
+export interface FeedResponse extends FeedPage {
+  source: SourceCode;
+  sort: FeedSort;
+  page: number;
+  meta: { durationMs: number };
 }
 
 export interface Title {

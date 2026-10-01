@@ -1,8 +1,8 @@
 import { SourceCode, UserProfile } from "@koma/shared";
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api, setToken, token } from "./api/client";
-import { HistoryPage } from "./pages/History/HistoryPage";
+import { AppShell } from "./components/AppShell/AppShell";
 import { HomePage } from "./pages/Home/HomePage";
 import { LibraryPage } from "./pages/Library/LibraryPage";
 import { ReaderPage } from "./pages/Reader/ReaderPage";
@@ -77,26 +77,24 @@ export function App() {
 
   const reading = location.pathname.startsWith("/read/");
 
+  const routes = (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/title/:source/:externalId" element={<TitlePage />} />
+      <Route path="/read/:source/:chapterId" element={<ReaderPage />} />
+      <Route path="/list" element={<LibraryPage />} />
+      <Route path="/account" element={<SettingsPage />} />
+      <Route path="/library" element={<Navigate to="/list" replace />} />
+      <Route path="/history" element={<Navigate to="/list?tab=history" replace />} />
+      <Route path="/settings" element={<Navigate to="/account" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+
   return (
     <main className="phone">
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/title/:source/:externalId" element={<TitlePage />} />
-        <Route path="/read/:source/:chapterId" element={<ReaderPage />} />
-        <Route path="/library" element={<LibraryPage />} />
-        <Route path="/history" element={<HistoryPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-      </Routes>
-      {reading ? null : (
-        <nav className="tabbar">
-          <NavLink to="/" end>Дім</NavLink>
-          <NavLink to="/search">Пошук</NavLink>
-          <NavLink to="/library">Полиця</NavLink>
-          <NavLink to="/history">Історія</NavLink>
-          <NavLink to="/settings">Ще</NavLink>
-        </nav>
-      )}
+      {reading ? routes : <AppShell>{routes}</AppShell>}
     </main>
   );
 }

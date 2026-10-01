@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Chapter, ChapterDetails, SearchResult, Title } from "@koma/shared";
+import { Chapter, ChapterDetails, FeedPage, FeedSort, SearchResult, Title } from "@koma/shared";
 import { SourceError } from "../errors/source-errors";
 import { MangaSource } from "../manga-source.interface";
 import { MangalibClient } from "./mangalib.client";
@@ -26,6 +26,18 @@ export class MangalibAdapter implements MangaSource {
     return (body.data ?? [])
       .map((item) => mapSearchItem(item as Parameters<typeof mapSearchItem>[0], this.client.siteBase))
       .filter((item): item is SearchResult => item !== null);
+  }
+
+  async browse(sort: FeedSort, page: number): Promise<FeedPage> {
+    const sortBy = sort === "updated" ? "last_chapter_at" : "views";
+    const body = (await this.cached(`browse:${sortBy}:${page}`, () => this.client.browse(sortBy, page), 300_000)) as {
+      data?: unknown[];
+      meta?: { has_next_page?: boolean };
+    };
+    const items = (body.data ?? [])
+      .map((item) => mapSearchItem(item as Parameters<typeof mapSearchItem>[0], this.client.siteBase))
+      .filter((item): item is SearchResult => item !== null);
+    return { items, hasMore: Boolean(body.meta?.has_next_page) && items.length > 0 };
   }
 
   async getTitle(externalId: string): Promise<Title> {

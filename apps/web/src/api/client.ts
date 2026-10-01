@@ -3,6 +3,8 @@ import {
   Chapter,
   ChapterResponse,
   ChaptersResponse,
+  FeedResponse,
+  FeedSort,
   HistoryResponse,
   LibraryTitle,
   ProgressResponse,
@@ -59,6 +61,9 @@ export const api = {
   },
   sources() {
     return request<{ sources: SourceInfo[] }>("/api/v1/sources");
+  },
+  feed(source: string, sort: FeedSort, page: number) {
+    return request<FeedResponse>(`/api/v1/feed?source=${encodeURIComponent(source)}&sort=${sort}&page=${page}`);
   },
   search(source: string, q: string) {
     return request<SearchResponse>(`/api/v1/search?source=${encodeURIComponent(source)}&q=${encodeURIComponent(q)}`);

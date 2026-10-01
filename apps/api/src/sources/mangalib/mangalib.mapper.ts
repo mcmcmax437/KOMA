@@ -16,6 +16,8 @@ interface SearchItem {
   slug_url?: string;
   cover?: Cover;
   status?: { label?: string };
+  type?: { label?: string };
+  rating?: { averageFormated?: string; average?: string };
 }
 
 interface ChapterItem {
@@ -50,6 +52,9 @@ export function mapSearchItem(item: SearchItem, siteBase: string): SearchResult 
     alternativeTitles: [...new Set(alternatives)],
     coverUrl: coverUrl(item.cover),
     url: `${siteBase}/ru/manga/${item.slug_url}`,
+    rating: item.rating?.averageFormated || item.rating?.average || undefined,
+    kind: item.type?.label || undefined,
+    status: item.status?.label || undefined,
   };
 }
 

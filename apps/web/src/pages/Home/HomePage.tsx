@@ -1,12 +1,19 @@
-import { ContinueItem } from "@koma/shared";
-import { useEffect, useState } from "react";
+import { ContinueItem, FeedSort, SearchResult } from "@koma/shared";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../api/client";
-import { MangaCard } from "../../components/MangaCard/MangaCard";
+import { ApiError, api } from "../../api/client";
+import { Cover } from "../../components/MangaCard/Cover";
+import { SourceError } from "../../components/SourceError/SourceError";
 import { SourceSelector } from "../../components/SourceSelector/SourceSelector";
-import { SOURCE_LABEL, useAppState } from "../../store/app-store";
+import { TitleGrid } from "../../components/TitleGrid/TitleGrid";
+import { SOURCE_LABEL, otherSource, useAppState } from "../../store/app-store";
 
-function continuePath(item: ContinueItem): string {
+const SORTS: Array<{ value: FeedSort; label: string }> = [
+  { value: "popular", label: "Популярне" },
+  { value: "updated", label: "Оновлення" },
+];
+
+export function continuePath(item: ContinueItem): string {
   const params = new URLSearchParams({
     title: item.externalTitleId,
     page: String(item.page),
@@ -20,54 +27,113 @@ function continuePath(item: ContinueItem): string {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { source, setSource } = useAppState();
-  const [current, setCurrent] = useState<ContinueItem | null>(null);
+  const { source, setSource, user } = useAppState();
   const [recent, setRecent] = useState<ContinueItem[]>([]);
-  const [error, setError] = useState("");
+  const [sort, setSort] = useState<FeedSort>("popular");
+  const [items, setItems] = useState<SearchResult[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
+  const request = useRef(0);
 
   useEffect(() => {
-    api.progress().then((data) => {
-      setCurrent(data.continue);
-      setRecent(data.items.slice(0, 5));
-    }).catch((reason: Error) => setError(reason.message));
+    api.progress().then((data) => setRecent(data.items.slice(0, 8))).catch(() => setRecent([]));
   }, []);
+
+  async function load(nextPage: number) {
+    const id = ++request.current;
+    setLoading(true);
+    setError(null);
+    if (nextPage === 1) setItems([]);
+    try {
+      const data = await api.feed(source, sort, nextPage);
+      if (id !== request.current) return;
+      setItems((current) => {
+        if (nextPage === 1) return data.items;
+        const seen = new Set(current.map((item) => item.externalId));
+        return [...current, ...data.items.filter((item) => !seen.has(item.externalId))];
+      });
+      setPage(nextPage);
+      setHasMore(data.hasMore);
+    } catch (reason) {
+      if (id !== request.current) return;
+      setError(reason instanceof ApiError ? reason : new ApiError("SOURCE_UNAVAILABLE", "Джерело тимчасово недоступне"));
+      setHasMore(false);
+    } finally {
+      if (id === request.current) setLoading(false);
+    }
+  }
+
+  useEffect(() => { void load(1); }, [source, sort]);
+
+  const name = user?.firstName || user?.username;
 
   return (
     <section className="page">
-      <header className="mast">
-        <p className="eyebrow">Telegram reader</p>
-        <h1>KOMA</h1>
-        <p className="lede">Одне джерело за раз. Каталог живе на сайті, тут лишається лише ваше місце в главі.</p>
+      <header className="hero">
+        <p className="eyebrow">{name ? `Привіт, ${name}` : "Telegram reader"}</p>
+        <h1>Що читаємо сьогодні?</h1>
       </header>
-      <SourceSelector value={source} onChange={setSource} />
-      {error ? <p className="meta">{error}</p> : null}
-      {current ? (
-        <article className="continue">
-          <p className="eyebrow">Продовжити</p>
-          <h2>{current.titleName}</h2>
-          <p>{SOURCE_LABEL[current.sourceCode] ?? current.sourceCode} · {current.chapterNumber} · стор. {current.page}</p>
-          <button type="button" className="accent" onClick={() => navigate(continuePath(current))}>Відкрити сторінку {current.page}</button>
-        </article>
-      ) : (
-        <div className="empty-card">
-          <h2>Ще немає місця, куди повернутися</h2>
-          <p>Знайдіть тайтл у вибраному джерелі. Прогрес збережеться саме для нього.</p>
-          <button type="button" onClick={() => navigate("/search")}>До пошуку</button>
-        </div>
-      )}
+
       {recent.length > 0 ? (
-        <div className="stack">
-          <h2 className="section">Нещодавно</h2>
-          {recent.map((item) => (
-            <MangaCard
-              key={`${item.userTitleSourceId}-${item.externalChapterId}`}
-              title={item.titleName}
-              coverUrl={item.coverUrl}
-              meta={`${SOURCE_LABEL[item.sourceCode] ?? item.sourceCode} · ${item.chapterNumber} · стор. ${item.page}`}
-              onClick={() => navigate(continuePath(item))}
-            />
-          ))}
+        <div className="shelf">
+          <div className="section-head">
+            <h2 className="section">Продовжити</h2>
+            <button type="button" className="textish" onClick={() => navigate("/list?tab=history")}>Уся історія</button>
+          </div>
+          <div className="rail">
+            {recent.map((item) => (
+              <button key={`${item.userTitleSourceId}-${item.externalChapterId}`} type="button" className="rail-card" onClick={() => navigate(continuePath(item))}>
+                <Cover src={item.coverUrl} alt="" className="rail-img" />
+                <span className="rail-body">
+                  <strong>{item.titleName}</strong>
+                  <small>{item.chapterNumber} · стор. {item.page}</small>
+                  <span className="bar"><span style={{ width: `${Math.max(4, Math.min(100, item.progressPercent))}%` }} /></span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
+      ) : null}
+
+      <div className="section-head">
+        <h2 className="section">Каталог {SOURCE_LABEL[source]}</h2>
+      </div>
+      <SourceSelector value={source} onChange={setSource} />
+      <div className="chips" role="tablist" aria-label="Сортування">
+        {SORTS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="tab"
+            aria-selected={sort === option.value}
+            className={sort === option.value ? "chip on" : "chip"}
+            onClick={() => setSort(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {error ? (
+        <SourceError
+          message={error.message}
+          onRetry={() => void load(page === 1 || items.length === 0 ? 1 : page + 1)}
+          onSwitch={() => setSource(otherSource(source))}
+        />
+      ) : null}
+
+      <TitleGrid
+        items={items}
+        loading={loading}
+        skeletons={items.length === 0 ? 9 : 3}
+        onOpen={(item) => navigate(`/title/${source}/${encodeURIComponent(item.externalId)}`)}
+      />
+
+      {!loading && !error && items.length === 0 ? <p className="empty">Джерело не повернуло жодного тайтлу.</p> : null}
+      {hasMore && !loading ? (
+        <button type="button" className="more" onClick={() => void load(page + 1)}>Показати ще</button>
       ) : null}
     </section>
   );

@@ -23,6 +23,20 @@ describe("mangalib mapper", () => {
     assert.equal(title.description, "Пиратская история.");
   });
 
+  it("keeps rating, type, and status on catalog cards", () => {
+    const card = mapSearchItem({
+      slug_url: "7580--i-alone-level-up",
+      rus_name: "Поднятие уровня в одиночку",
+      eng_name: "Solo Leveling",
+      rating: { averageFormated: "9.5", average: "9.47" },
+      type: { label: "Манхва" },
+      status: { label: "Завершён" },
+    }, site);
+    assert.equal(card?.rating, "9.5");
+    assert.equal(card?.kind, "Манхва");
+    assert.equal(card?.status, "Завершён");
+  });
+
   it("keeps the open branch and sorts chapters numerically", () => {
     const chapters = mapChapters("206--one-piece", read("chapters.json").data, site);
     assert.equal(chapters.length, 2);

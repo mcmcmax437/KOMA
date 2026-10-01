@@ -1,9 +1,26 @@
 import { BadRequestException, Controller, Get, Inject, Param, Query } from "@nestjs/common";
-import { SourceCode } from "@koma/shared";
-import { IsIn, IsString, Length } from "class-validator";
+import { FeedSort, SourceCode } from "@koma/shared";
+import { Type } from "class-transformer";
+import { IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from "class-validator";
 import { RateLimit } from "../common/rate-limit.guard";
-import { SOURCE_CODES } from "@koma/shared";
+import { FEED_SORTS, SOURCE_CODES } from "@koma/shared";
 import { SourceManager } from "./source-manager.service";
+
+class FeedQueryDto {
+  @IsIn(SOURCE_CODES)
+  source!: SourceCode;
+
+  @IsOptional()
+  @IsIn(FEED_SORTS)
+  sort?: FeedSort;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  page?: number;
+}
 
 class SearchQueryDto {
   @IsIn(SOURCE_CODES)
@@ -37,6 +54,17 @@ export class SourcesController {
     const source = this.sources.get(query.source);
     const results = await source.search(query.q.trim());
     return { source: source.code, query: query.q.trim(), results, meta: { durationMs: Date.now() - started } };
+  }
+
+  @RateLimit("title")
+  @Get("feed")
+  async feed(@Query() query: FeedQueryDto) {
+    const started = Date.now();
+    const source = this.sources.get(query.source);
+    const sort = query.sort ?? "popular";
+    const page = query.page ?? 1;
+    const result = await source.browse(sort, page);
+    return { source: source.code, sort, page, ...result, meta: { durationMs: Date.now() - started } };
   }
 
   @RateLimit("title")

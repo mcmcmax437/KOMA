@@ -24,6 +24,12 @@ export class MangalibClient {
     return this.getJson(`/api/manga?${params.toString()}`, "search");
   }
 
+  browse(sortBy: "views" | "last_chapter_at", page: number): Promise<unknown> {
+    const params = new URLSearchParams({ page: String(page), sort_by: sortBy });
+    params.append("site_id[]", "1");
+    return this.getJson(`/api/manga?${params.toString()}`, "search");
+  }
+
   title(slug: string): Promise<unknown> {
     const params = new URLSearchParams();
     for (const field of ["summary", "authors", "eng_name", "otherNames", "rate"]) params.append("fields[]", field);

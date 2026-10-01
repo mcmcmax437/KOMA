@@ -2,10 +2,11 @@ import { SearchResult } from "@koma/shared";
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError, api } from "../../api/client";
-import { MangaCard } from "../../components/MangaCard/MangaCard";
+import { Icon } from "../../components/Icon/Icon";
 import { SourceError } from "../../components/SourceError/SourceError";
 import { SourceSelector } from "../../components/SourceSelector/SourceSelector";
-import { otherSource, useAppState } from "../../store/app-store";
+import { TitleGrid } from "../../components/TitleGrid/TitleGrid";
+import { SOURCE_LABEL, otherSource, useAppState } from "../../store/app-store";
 
 export function SearchPage() {
   const navigate = useNavigate();
@@ -22,12 +23,12 @@ export function SearchPage() {
     if (!q) return;
     setLoading(true);
     setError(null);
+    setResults([]);
     try {
       const data = await api.search(source, q);
       setResults(data.results);
       setSearched(q);
     } catch (reason) {
-      setResults([]);
       setError(reason instanceof ApiError ? reason : new ApiError("SEARCH_FAILED", "Пошук не вдався"));
     } finally {
       setLoading(false);
@@ -36,15 +37,18 @@ export function SearchPage() {
 
   return (
     <section className="page">
-      <header className="mast compact">
+      <header className="hero compact">
         <h1>Пошук</h1>
-        <p className="lede">Результати лише з {source === "comx" ? "Com-X" : "MangaLib"}. Інше джерело — окремий запит.</p>
+        <p className="lede">Шукаємо лише в {SOURCE_LABEL[source]}. Інше джерело — окремий запит.</p>
       </header>
-      <SourceSelector value={source} onChange={(next) => { setSource(next); setResults([]); setSearched(""); }} />
-      <form className="search" onSubmit={run}>
+      <SourceSelector value={source} onChange={(next) => { setSource(next); setResults([]); setSearched(""); setError(null); }} />
+      <form className="search" onSubmit={run} role="search">
         <label className="sr" htmlFor="q">Назва</label>
-        <input id="q" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Назва тайтлу" maxLength={120} />
-        <button type="submit" disabled={loading}>{loading ? "Шукаю" : "Знайти"}</button>
+        <span className="search-field">
+          <Icon name="search" size={18} />
+          <input id="q" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Назва тайтлу" maxLength={120} enterKeyHint="search" />
+        </span>
+        <button type="submit" disabled={loading || !query.trim()}>{loading ? "Шукаю…" : "Знайти"}</button>
       </form>
       {error ? (
         <SourceError
@@ -53,19 +57,20 @@ export function SearchPage() {
           onSwitch={() => { setSource(otherSource(source)); setResults([]); setError(null); }}
         />
       ) : null}
-      {loading ? <p className="meta">Запит іде лише в обране джерело…</p> : null}
-      {!loading && searched && results.length === 0 && !error ? <p className="empty">Нічого не знайдено в цьому джерелі.</p> : null}
-      <div className="stack">
-        {results.map((item) => (
-          <MangaCard
-            key={item.externalId}
-            title={item.title}
-            coverUrl={item.coverUrl}
-            meta={item.alternativeTitles?.join(" · ")}
-            onClick={() => navigate(`/title/${source}/${encodeURIComponent(item.externalId)}`)}
-          />
-        ))}
-      </div>
+      {searched && !loading && !error ? (
+        <p className="meta">{results.length > 0 ? `Знайдено: ${results.length} · «${searched}»` : `Нічого не знайдено за «${searched}» у цьому джерелі.`}</p>
+      ) : null}
+      {!searched && !loading && !error ? (
+        <div className="hint-card">
+          <Icon name="search" size={28} />
+          <p>Введіть назву українською, російською чи англійською.</p>
+        </div>
+      ) : null}
+      <TitleGrid
+        items={results}
+        loading={loading}
+        onOpen={(item) => navigate(`/title/${source}/${encodeURIComponent(item.externalId)}`)}
+      />
     </section>
   );
 }

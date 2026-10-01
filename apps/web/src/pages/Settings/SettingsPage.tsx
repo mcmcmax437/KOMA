@@ -1,13 +1,42 @@
+import { useEffect, useState } from "react";
+import { api } from "../../api/client";
+import { SourceSelector } from "../../components/SourceSelector/SourceSelector";
 import { useAppState } from "../../store/app-store";
 
 export function SettingsPage() {
-  const { settings, updateSettings, user } = useAppState();
+  const { settings, updateSettings, user, source, setSource } = useAppState();
+  const [stats, setStats] = useState<{ titles: number; sessions: number } | null>(null);
+  const name = user?.firstName || user?.username || "Читач";
+
+  useEffect(() => {
+    Promise.all([api.library(), api.history()])
+      .then(([titles, history]) => setStats({ titles: titles.length, sessions: history.items.length }))
+      .catch(() => setStats(null));
+  }, []);
+
   return (
     <section className="page">
-      <header className="mast compact">
-        <h1>Налаштування</h1>
-        <p className="lede">{user?.firstName || user?.username || "Читач"} · Telegram {user?.telegramId}</p>
+      <header className="hero compact">
+        <h1>Акаунт</h1>
       </header>
+
+      <article className="profile">
+        <div className="avatar large">{name.slice(0, 1).toUpperCase()}</div>
+        <div>
+          <h2>{name}</h2>
+          <p className="meta">{user?.username ? `@${user.username} · ` : ""}Telegram {user?.telegramId}</p>
+        </div>
+      </article>
+
+      <div className="stats">
+        <div><strong>{stats?.titles ?? "—"}</strong><small>на полиці</small></div>
+        <div><strong>{stats?.sessions ?? "—"}</strong><small>сесій читання</small></div>
+      </div>
+
+      <fieldset>
+        <legend>Джерело за замовчуванням</legend>
+        <SourceSelector value={source} onChange={setSource} />
+      </fieldset>
       <fieldset>
         <legend>Тема</legend>
         <div className="segment">

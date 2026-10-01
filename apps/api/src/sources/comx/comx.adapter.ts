@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Chapter, ChapterDetails, SearchResult, Title } from "@koma/shared";
+import { Chapter, ChapterDetails, FeedPage, FeedSort, SearchResult, Title } from "@koma/shared";
 import { loadConfig } from "../../config";
 import { SourceError } from "../errors/source-errors";
 import { MangaSource } from "../manga-source.interface";
@@ -21,6 +21,15 @@ export class ComxAdapter implements MangaSource {
     const path = `/search/${encodeURIComponent(query)}/page/1/`;
     const html = await this.cached(`search:${query.toLowerCase()}`, () => this.client.getHtml(path));
     return parseSearchHtml(html, base);
+  }
+
+  async browse(sort: FeedSort, page: number): Promise<FeedPage> {
+    const base = loadConfig().comxBaseUrl;
+    const query = sort === "popular" ? "?dlenewssortby=rating&dledirection=desc" : "";
+    const path = page > 1 ? `/page/${page}/${query}` : `/${query}`;
+    const html = await this.cached(`browse:${sort}:${page}`, () => this.client.getHtml(path), 300_000);
+    const items = parseSearchHtml(html, base);
+    return { items, hasMore: items.length > 0 };
   }
 
   async getTitle(externalId: string): Promise<Title> {
