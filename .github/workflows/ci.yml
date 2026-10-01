@@ -81,4 +81,9 @@ jobs:
           ssh $ssh_opts "$SSH_USER@$SSH_HOST" "test -f /usr/src/koma_miniApp/KOMA/.env" \
             || { echo "Create /usr/src/koma_miniApp/KOMA/.env on the server. Deploys do not write it."; exit 1; }
           ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
-            "cd /usr/src/koma_miniApp/KOMA && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans"
+            "cd /usr/src/koma_miniApp/KOMA && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans" \
+            || {
+              ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
+                "cd /usr/src/koma_miniApp/KOMA && docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail 120 mysql"
+              exit 1
+            }

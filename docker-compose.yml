@@ -11,10 +11,12 @@ services:
     volumes:
       - koma_mysql:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -ukoma -p$$MYSQL_PASSWORD"]
-      interval: 5s
+      # MySQL 8 returns "Access denied" until init finishes. That still means the server is up.
+      test: ["CMD-SHELL", "mysqladmin --protocol=TCP ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" 2>&1 | grep -Eq 'mysqld is alive|Access denied'"]
+      interval: 10s
       timeout: 5s
       retries: 30
+      start_period: 60s
 
   api:
     build:
