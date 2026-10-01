@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+coverage/
+.DS_Store
+apps/web/dist/
+apps/api/dist/
+packages/shared/dist/
+_design_spec.txt
+_libgroup.kt
+_libgroupdto.kt
+_ml_*.json
+_ml_title_keys.txt

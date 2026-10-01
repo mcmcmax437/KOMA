@@ -1,0 +1,13 @@
+{
+  "data": [
+    {
+      "id": 206,
+      "name": "One Piece",
+      "rus_name": "Ван Пис",
+      "eng_name": "One Piece",
+      "slug_url": "206--one-piece",
+      "cover": { "default": "https://cover.cdnlibs.org/uploads/cover/one-piece/cover/a.jpg" },
+      "status": { "id": 1, "label": "Онгоинг" }
+    }
+  ]
+}

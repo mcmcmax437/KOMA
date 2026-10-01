@@ -1,0 +1,28 @@
+{
+  "name": "koma",
+  "private": true,
+  "version": "0.1.0",
+  "description": "KOMA manga reader — Telegram Mini App, on-demand sources, user state only",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @koma/shared && npm run build -w @koma/api && npm run build -w @koma/web",
+    "test": "npm run test -w @koma/api",
+    "dev:api": "npm run dev -w @koma/api",
+    "dev:web": "npm run dev -w @koma/web",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2"
+  },
+  "devDependencies": {
+    "prisma": "^6.16.2",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

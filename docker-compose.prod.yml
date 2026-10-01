@@ -1,0 +1,18 @@
+# Production overlay. Requires Docker Compose v2.24+ for !reset.
+# Host nginx keeps ports 80 and 443. The Mini App is only on 127.0.0.1:8080.
+services:
+  mysql:
+    restart: unless-stopped
+    ports: !reset []
+
+  api:
+    restart: unless-stopped
+    ports: !reset []
+
+  worker:
+    restart: unless-stopped
+
+  web:
+    restart: unless-stopped
+    ports: !reset
+      - "127.0.0.1:8080:80"

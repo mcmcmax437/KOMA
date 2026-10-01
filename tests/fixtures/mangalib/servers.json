@@ -1,0 +1,9 @@
+{
+  "data": {
+    "name": "Неизменное",
+    "pages": [
+      { "slug": 1, "url": "//manga/one-piece/chapters/1/a.jpg" },
+      { "slug": 2, "url": "https://img2.imglib.info/manga/one-piece/chapters/1/b.jpg" }
+    ]
+  }
+}

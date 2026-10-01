@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// Telegram identity. No password accounts.
+model User {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  telegramId BigInt   @unique @map("telegram_id")
+  username   String?  @db.VarChar(255)
+  firstName  String?  @map("first_name") @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  titles   UserTitle[]
+  progress ReadingProgress[]
+  history  ReadingHistory[]
+
+  @@map("users")
+}
+
+/// Logical library item. Not a global manga catalog row.
+model UserTitle {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  titleName String   @map("title_name") @db.VarChar(500)
+  coverUrl  String?  @map("cover_url") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sources UserTitleSource[]
+
+  @@index([userId], map: "idx_user_titles_user")
+  @@map("user_titles")
+}
+
+/// One source mapping for a logical title. Progress is per mapping.
+model UserTitleSource {
+  id                   BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userTitleId          BigInt    @map("user_title_id") @db.UnsignedBigInt
+  sourceCode           String    @map("source_code") @db.VarChar(50)
+  externalTitleId      String    @map("external_title_id") @db.VarChar(255)
+  externalTitleUrl     String    @map("external_title_url") @db.Text
+  lastKnownChapter     String?   @map("last_known_chapter") @db.VarChar(100)
+  lastCheckedAt        DateTime? @map("last_checked_at")
+  notificationsEnabled Boolean   @default(false) @map("notifications_enabled")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  userTitle UserTitle         @relation(fields: [userTitleId], references: [id], onDelete: Cascade)
+  progress  ReadingProgress[]
+  history   ReadingHistory[]
+
+  @@unique([userTitleId, sourceCode], map: "uq_title_source")
+  @@index([sourceCode, externalTitleId], map: "idx_uts_source_external")
+  @@index([notificationsEnabled, lastCheckedAt], map: "idx_uts_notifications")
+  @@map("user_title_sources")
+}
+
+/// Latest position for a source mapping and external chapter id.
+model ReadingProgress {
+  id                BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId            BigInt   @map("user_id") @db.UnsignedBigInt
+  userTitleSourceId BigInt   @map("user_title_source_id") @db.UnsignedBigInt
+  externalChapterId String   @map("external_chapter_id") @db.VarChar(255)
+  chapterNumber     String   @map("chapter_number") @db.VarChar(100)
+  page              Int      @default(1) @db.UnsignedInt
+  progressPercent   Decimal  @default(0.00) @map("progress_percent") @db.Decimal(5, 2)
+  completed         Boolean  @default(false)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source UserTitleSource @relation(fields: [userTitleSourceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, userTitleSourceId, externalChapterId], map: "uq_progress_chapter")
+  @@index([userId, updatedAt], map: "idx_progress_latest")
+  @@map("reading_progress")
+}
+
+model ReadingHistory {
+  id                BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userId            BigInt    @map("user_id") @db.UnsignedBigInt
+  userTitleSourceId BigInt    @map("user_title_source_id") @db.UnsignedBigInt
+  externalChapterId String    @map("external_chapter_id") @db.VarChar(255)
+  chapterNumber     String    @map("chapter_number") @db.VarChar(100)
+  startedAt         DateTime  @default(now()) @map("started_at")
+  finishedAt        DateTime? @map("finished_at")
+  lastPage          Int       @default(1) @map("last_page") @db.UnsignedInt
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source UserTitleSource @relation(fields: [userTitleSourceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt], map: "idx_history_user_date")
+  @@map("reading_history")
+}

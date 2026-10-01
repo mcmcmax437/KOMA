@@ -1,0 +1,12 @@
+{
+  "data": {
+    "rus_name": "Ван Пис",
+    "name": "One Piece",
+    "eng_name": "One Piece",
+    "slug_url": "206--one-piece",
+    "cover": { "default": "https://cover.cdnlibs.org/uploads/cover/one-piece/cover/a.jpg" },
+    "summary": { "type": "doc", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Пиратская история." }] }] },
+    "authors": [{ "name": "Eiichiro Oda" }],
+    "status": { "id": 1, "label": "Онгоинг" }
+  }
+}

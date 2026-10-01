@@ -1,0 +1,10 @@
+node_modules
+**/dist
+.git
+**/*.test.ts
+_design_spec.txt
+_libgroup.kt
+_libgroupdto.kt
+_ml_*.json
+_ml_title_keys.txt
+agent-transcripts

@@ -1,0 +1,75 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: koma
+      MYSQL_USER: koma
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-koma}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - "3306:3306"
+    volumes:
+      - koma_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -ukoma -p$$MYSQL_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      PROCESS_ROLE: api
+      DATABASE_URL: mysql://koma:${MYSQL_PASSWORD:-koma}@mysql:3306/koma
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_WEBAPP_URL: ${TELEGRAM_WEBAPP_URL:-}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:8080}
+      COMX_BASE_URL: ${COMX_BASE_URL:-https://com-x.life}
+      MANGALIB_BASE_URL: ${MANGALIB_BASE_URL:-https://mangalib.me}
+      MANGALIB_API_URL: ${MANGALIB_API_URL:-https://api.cdnlibs.org}
+      ALLOW_DEV_AUTH: "false"
+      LOG_LEVEL: info
+      IMAGE_HOST_ALLOWLIST: com-x.life,cdnlibs.org,imglib.info,mangalib.me
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    command: ["node", "apps/api/dist/worker.js"]
+    environment:
+      NODE_ENV: production
+      PROCESS_ROLE: worker
+      DATABASE_URL: mysql://koma:${MYSQL_PASSWORD:-koma}@mysql:3306/koma
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_WEBAPP_URL: ${TELEGRAM_WEBAPP_URL:-}
+      COMX_BASE_URL: ${COMX_BASE_URL:-https://com-x.life}
+      MANGALIB_BASE_URL: ${MANGALIB_BASE_URL:-https://mangalib.me}
+      MANGALIB_API_URL: ${MANGALIB_API_URL:-https://api.cdnlibs.org}
+      ALLOW_DEV_AUTH: "false"
+      LOG_LEVEL: info
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  koma_mysql:

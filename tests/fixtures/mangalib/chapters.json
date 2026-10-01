@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "volume": "1",
+      "number": "1",
+      "name": "Романтика",
+      "index": 1,
+      "branches_count": 1,
+      "branches": [{ "branch_id": null }]
+    },
+    {
+      "volume": "108",
+      "number": "1194",
+      "name": "Неизменное",
+      "index": 1200,
+      "branches": [
+        { "branch_id": 10, "restricted_view": { "is_open": false } },
+        { "branch_id": 20, "restricted_view": { "is_open": true } }
+      ]
+    }
+  ]
+}
