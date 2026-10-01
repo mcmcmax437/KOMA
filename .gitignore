@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+.mysql-ready
 *.log
 coverage/
 .DS_Store

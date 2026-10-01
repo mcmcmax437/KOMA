@@ -4,7 +4,8 @@ services:
   mysql:
     restart: unless-stopped
     ports: !reset []
-    command: ["--innodb-buffer-pool-size=64M", "--performance-schema=OFF"]
+    shm_size: 256mb
+    command: ["--innodb-buffer-pool-size=128M"]
 
   api:
     restart: unless-stopped

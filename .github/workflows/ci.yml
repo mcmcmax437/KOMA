@@ -76,14 +76,28 @@ jobs:
             --exclude .git \
             --exclude node_modules \
             --exclude .env \
+            --exclude .mysql-ready \
             --exclude '**/dist' \
             . | ssh $ssh_opts "$SSH_USER@$SSH_HOST" "tar -xzf - -C /usr/src/koma_miniApp/KOMA"
           ssh $ssh_opts "$SSH_USER@$SSH_HOST" "test -f /usr/src/koma_miniApp/KOMA/.env" \
             || { echo "Create /usr/src/koma_miniApp/KOMA/.env on the server. Deploys do not write it."; exit 1; }
-          ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
-            "cd /usr/src/koma_miniApp/KOMA && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans" \
-            || {
-              ssh $ssh_opts "$SSH_USER@$SSH_HOST" \
-                "cd /usr/src/koma_miniApp/KOMA && docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail 120 mysql"
-              exit 1
-            }
+          ssh $ssh_opts "$SSH_USER@$SSH_HOST" "bash -s" << 'REMOTE'
+          set -eu
+          cd /usr/src/koma_miniApp/KOMA
+          # The first boot never finished, so that data directory cannot be reused.
+          # After MySQL answers, .mysql-ready keeps later deploys from deleting it.
+          if [ ! -f .mysql-ready ]; then
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans || true
+            docker volume rm -f koma_koma_mysql || true
+          fi
+          if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans; then
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail 120 mysql
+            exit 1
+          fi
+          if ! docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T mysql \
+            sh -c 'mysqladmin --protocol=TCP ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent'; then
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail 120 mysql
+            exit 1
+          fi
+          touch .mysql-ready
+          REMOTE
