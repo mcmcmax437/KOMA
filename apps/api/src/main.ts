@@ -11,7 +11,7 @@ async function bootstrap(): Promise<void> {
   app.enableCors({ origin: config.webOrigin });
   app.use(requestIdMiddleware);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
-  await app.listen(config.port);
+  await app.listen(config.port, config.host);
 }
 
 void bootstrap();

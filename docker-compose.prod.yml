@@ -11,6 +11,9 @@ services:
     ports: !reset []
     depends_on: !reset []
     environment:
+      # Host port 3000 is already taken by another service.
+      PORT: 3010
+      HOST: 127.0.0.1
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
 
   worker:
@@ -22,9 +25,7 @@ services:
 
   web:
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: host
+    ports: !reset []
     volumes:
       - ./docker/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
-    ports: !override
-      - "127.0.0.1:8080:80"

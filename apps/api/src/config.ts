@@ -1,5 +1,6 @@
 export interface AppConfig {
   port: number;
+  host: string;
   nodeEnv: string;
   jwtSecret: string;
   telegramBotToken: string;
@@ -25,6 +26,7 @@ export function loadConfig(): AppConfig {
   const origin = process.env.WEB_ORIGIN?.trim();
   return {
     port: Number(process.env.PORT ?? 3000),
+    host: process.env.HOST?.trim() || "0.0.0.0",
     nodeEnv,
     jwtSecret: jwtSecret || "dev-only-change-me",
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN ?? "",
