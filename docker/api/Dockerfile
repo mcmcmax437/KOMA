@@ -7,13 +7,15 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN npm ci
 COPY prisma prisma
+# Generate does not connect. Compose replaces this at runtime.
+ENV DATABASE_URL=mysql://koma:koma@mysql:3306/koma
+RUN npm ci
 COPY packages/shared packages/shared
 COPY apps/api apps/api
-RUN npm run build -w @koma/shared \
-  && npm run build -w @koma/api \
-  && npx prisma generate
+RUN npx prisma generate \
+  && npm run build -w @koma/shared \
+  && npm run build -w @koma/api
 ENV NODE_ENV=production
 EXPOSE 3000
 CMD ["sh", "-c", "npx prisma migrate deploy && node apps/api/dist/main.js"]
